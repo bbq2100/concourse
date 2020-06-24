@@ -1,5 +1,6 @@
 module BuildStepTests exposing (all)
 
+import Api.EventSource exposing (Event(..))
 import Application.Application as Application
 import Array
 import Assets
@@ -689,17 +690,18 @@ theGetStepReturnsMetadata =
                     Ok <|
                         [ { url = "http://localhost:8080/api/v1/builds/1/events"
                           , data =
-                                FinishGet
-                                    { source = "stdout"
-                                    , id = "getStepId"
-                                    }
-                                    1
-                                    (Dict.fromList [ ( "ref", "abc123" ) ])
-                                    [ { name = "metadata-field"
-                                      , value = "metadata-value"
-                                      }
-                                    ]
-                                    Nothing
+                                Event <|
+                                    FinishGet
+                                        { source = "stdout"
+                                        , id = "getStepId"
+                                        }
+                                        1
+                                        (Dict.fromList [ ( "ref", "abc123" ) ])
+                                        [ { name = "metadata-field"
+                                          , value = "metadata-value"
+                                          }
+                                        ]
+                                        Nothing
                           }
                         ]
             )
@@ -1019,7 +1021,7 @@ taskEvent event =
         >> Application.handleDelivery
             (BuildEventsReceived <|
                 Ok
-                    [ { data = event
+                    [ { data = Event event
                       , url = "http://localhost:8080/api/v1/builds/1/events"
                       }
                     ]
@@ -1061,28 +1063,31 @@ thereIsALog stepId =
             (BuildEventsReceived <|
                 Ok
                     [ { data =
-                            InitializeTask
-                                { source = "stdout"
-                                , id = stepId
-                                }
-                                (Time.millisToPosix 0)
+                            Event <|
+                                InitializeTask
+                                    { source = "stdout"
+                                    , id = stepId
+                                    }
+                                    (Time.millisToPosix 0)
                       , url = "http://localhost:8080/api/v1/builds/1/events"
                       }
                     , { data =
-                            StartTask
-                                { source = "stdout"
-                                , id = stepId
-                                }
-                                (Time.millisToPosix 0)
+                            Event <|
+                                StartTask
+                                    { source = "stdout"
+                                    , id = taskStepId
+                                    }
+                                    (Time.millisToPosix 0)
                       , url = "http://localhost:8080/api/v1/builds/1/events"
                       }
                     , { data =
-                            Log
-                                { source = "stdout"
-                                , id = stepId
-                                }
-                                "the log output"
-                                (Just <| Time.millisToPosix 1000)
+                            Event <|
+                                Log
+                                    { source = "stdout"
+                                    , id = taskStepId
+                                    }
+                                    "the log output"
+                                    (Just <| Time.millisToPosix 1000)
                       , url = "http://localhost:8080/api/v1/builds/1/events"
                       }
                     ]
@@ -1095,9 +1100,10 @@ theBuildFinished =
             (BuildEventsReceived <|
                 Ok
                     [ { data =
-                            BuildStatus
-                                BuildStatusAborted
-                                (Time.millisToPosix 0)
+                            Event <|
+                                BuildStatus
+                                    BuildStatusAborted
+                                    (Time.millisToPosix 0)
                       , url = "http://localhost:8080/api/v1/builds/1/events"
                       }
                     ]
